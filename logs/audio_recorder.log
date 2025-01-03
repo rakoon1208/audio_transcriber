@@ -35,3 +35,12 @@ TypeError: 'AudioDevice' object is not subscriptable
 2025-01-02 20:14:36,882 - audio.recorder - INFO - Recording saved to recording_20250102_201436.wav
 2025-01-02 20:14:36,883 - gui.recorder_gui - INFO - Recording saved: recording_20250102_201436.wav
 2025-01-02 20:14:36,883 - gui.recorder_gui - INFO - Recording stopped
+2025-01-03 15:49:07,412 - __main__ - INFO - Starting Audio Recorder Application
+2025-01-03 15:49:07,873 - utils.file_utils - INFO - Directory structure created at C:\Users\rakoon\audio_recordings
+2025-01-03 15:49:07,883 - audio.recorder - INFO - Set recording device to: 1
+2025-01-03 15:49:10,528 - audio.recorder - INFO - Recording started
+2025-01-03 15:49:10,528 - gui.recorder_gui - INFO - Recording...
+2025-01-03 15:49:17,481 - audio.recorder - INFO - Recording stopped
+2025-01-03 15:49:17,481 - audio.recorder - INFO - Recording saved to C:\Users\rakoon\audio_recordings\recordings\recording_20250103_154917.wav
+2025-01-03 15:49:17,481 - gui.recorder_gui - INFO - Recording saved: C:\Users\rakoon\audio_recordings\recordings\recording_20250103_154917.wav
+2025-01-03 15:49:17,481 - gui.recorder_gui - INFO - Recording stopped

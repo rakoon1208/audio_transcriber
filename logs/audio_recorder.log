@@ -1,0 +1,37 @@
+2025-01-02 20:00:38,475 - __main__ - INFO - Starting Audio Recorder Application
+2025-01-02 20:00:38,996 - utils.file_utils - INFO - Directory structure created at C:\Users\rakoon\audio_recordings
+2025-01-02 20:00:39,007 - __main__ - ERROR - Application error: 'AudioDevice' object is not subscriptable
+Traceback (most recent call last):
+  File "C:\Users\rakoon\code\audio_transcriber\main.py", line 29, in main
+    app = AudioRecorderGUI()
+          ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\rakoon\code\audio_transcriber\gui\recorder_gui.py", line 28, in __init__
+    self._init_gui()
+  File "C:\Users\rakoon\code\audio_transcriber\gui\recorder_gui.py", line 47, in _init_gui
+    self._create_device_section()
+  File "C:\Users\rakoon\code\audio_transcriber\gui\recorder_gui.py", line 63, in _create_device_section
+    values=[f"{i}: {dev['name']}" for i, dev in enumerate(devices)],
+                    ~~~^^^^^^^^
+TypeError: 'AudioDevice' object is not subscriptable
+2025-01-02 20:08:29,887 - __main__ - INFO - Starting Audio Recorder Application
+2025-01-02 20:08:29,971 - utils.file_utils - INFO - Directory structure created at C:\Users\rakoon\audio_recordings
+2025-01-02 20:14:03,961 - audio.recorder - INFO - Recording started
+2025-01-02 20:14:03,962 - gui.recorder_gui - INFO - Recording...
+2025-01-02 20:14:23,335 - audio.recorder - INFO - Recording paused
+2025-01-02 20:14:23,335 - gui.recorder_gui - INFO - Recording paused
+2025-01-02 20:14:24,431 - audio.recorder - INFO - Recording stopped
+2025-01-02 20:14:24,433 - audio.recorder - INFO - Recording saved to recording_20250102_201424.wav
+2025-01-02 20:14:24,433 - gui.recorder_gui - INFO - Recording saved: recording_20250102_201424.wav
+2025-01-02 20:14:24,434 - gui.recorder_gui - INFO - Recording stopped
+2025-01-02 20:14:31,180 - audio.recorder - INFO - Recording started
+2025-01-02 20:14:31,181 - gui.recorder_gui - INFO - Recording...
+2025-01-02 20:14:33,201 - audio.recorder - INFO - Recording stopped
+2025-01-02 20:14:33,203 - audio.recorder - INFO - Recording saved to recording_20250102_201433.wav
+2025-01-02 20:14:33,203 - gui.recorder_gui - INFO - Recording saved: recording_20250102_201433.wav
+2025-01-02 20:14:33,203 - gui.recorder_gui - INFO - Recording stopped
+2025-01-02 20:14:34,306 - audio.recorder - INFO - Recording started
+2025-01-02 20:14:34,307 - gui.recorder_gui - INFO - Recording...
+2025-01-02 20:14:36,881 - audio.recorder - INFO - Recording stopped
+2025-01-02 20:14:36,882 - audio.recorder - INFO - Recording saved to recording_20250102_201436.wav
+2025-01-02 20:14:36,883 - gui.recorder_gui - INFO - Recording saved: recording_20250102_201436.wav
+2025-01-02 20:14:36,883 - gui.recorder_gui - INFO - Recording stopped

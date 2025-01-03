@@ -6,6 +6,7 @@ import shutil
 import logging
 from typing import Optional, Dict, List, Union
 import wave
+import numpy as np
 import soundfile as sf
 
 class FileManager:

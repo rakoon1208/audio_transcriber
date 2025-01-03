@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import logging
 from datetime import datetime
-from . import visualization, components
+from . import visualization
 from audio.recorder import AudioRecorder, AudioConfig
 from audio.transcription import TranscriptionManager, TranscriptionConfig
 from utils.device_utils import DeviceManager
@@ -57,15 +57,21 @@ class AudioRecorderGUI:
 
         # Device dropdown
         devices = self.device_manager.get_devices()
-        device_combobox = ttk.Combobox(
-            device_frame, 
+        self.device_combobox = ttk.Combobox(
+            device_frame,
             textvariable=self.device_var,
-            values=[f"{i}: {dev['name']}" for i, dev in enumerate(devices)],
+            values=[f"{dev.id}: {dev.name}" for dev in devices],
             state="readonly",
             width=50
         )
-        device_combobox.pack(side=tk.LEFT, padx=5)
-        device_combobox.bind('<<ComboboxSelected>>', self._on_device_change)
+        self.device_combobox.pack(side=tk.LEFT, padx=5)
+        self.device_combobox.bind('<<ComboboxSelected>>', self._on_device_change)
+
+        # Set default device if available
+        if devices:
+            default_device = next((dev for dev in devices if dev.is_default), devices[0])
+            self.device_combobox.set(f"{default_device.id}: {default_device.name}")
+            self.audio_recorder.set_device(default_device.id)
 
         # Refresh button
         ttk.Button(
@@ -179,18 +185,19 @@ class AudioRecorderGUI:
             self.pause_button.configure(text="Pause")
             self._update_status("Recording resumed")
 
-    def _audio_callback(self, indata, frames, time, status):
+    def _audio_callback(self, indata, frames, time_info, status):
         """Handle incoming audio data"""
         if status:
             self.logger.warning(f"Audio callback status: {status}")
-        self.visualizer.update(indata)
+        if indata is not None:
+            self.visualizer.update(indata)
 
     def _save_recording(self):
         """Save the current recording"""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"recording_{timestamp}"
-            path = self.audio_recorder.save_recording(filename)
+            filename = self.file_manager.get_save_path(f"recording_{timestamp}")
+            path = self.audio_recorder.save_recording(str(filename))
             self._update_status(f"Recording saved: {path}")
         except Exception as e:
             self._handle_error("Failed to save recording", e)
@@ -229,6 +236,18 @@ class AudioRecorderGUI:
         messagebox.showerror("Error", error_msg)
         self._update_status("Error occurred")
 
+    def _refresh_devices(self):
+        """Refresh the device list"""
+        devices = self.device_manager.get_devices()
+        self.device_var.set('')
+        self.device_combobox['values'] = [f"{dev.id}: {dev.name}" for dev in devices]
+
+    def _on_device_change(self, event):
+        """Handle device selection change"""
+        selected = self.device_var.get()
+        device_id = int(selected.split(':')[0])
+        self.audio_recorder.set_device(device_id)
+
     def _on_closing(self):
         """Handle application closing"""
         if self.audio_recorder.is_recording:
@@ -236,18 +255,6 @@ class AudioRecorderGUI:
                 return
             self._stop_recording()
         self.root.destroy()
-
-    def _refresh_devices(self):
-        """Refresh the device list"""
-        devices = self.device_manager.get_devices()
-        self.device_var.set('')
-        self.device_combobox['values'] = [f"{i}: {dev['name']}" for i, dev in enumerate(devices)]
-
-    def _on_device_change(self, event):
-        """Handle device selection change"""
-        selected = self.device_var.get()
-        device_id = int(selected.split(':')[0])
-        self.audio_recorder.set_device(device_id)
 
     def run(self):
         """Start the application"""

@@ -1,7 +1,7 @@
 import sys
 import logging
 from pathlib import Path
-from gui.recorder_gui import EnhancedAudioGUI
+from gui.recorder_gui import AudioRecorderGUI
 
 def setup_logging():
     """Configure logging for the application"""
@@ -26,7 +26,7 @@ def main():
         logger.info("Starting Audio Recorder Application")
         
         # Initialize and run GUI
-        app = EnhancedAudioGUI()
+        app = AudioRecorderGUI()
         app.run()
         
     except Exception as e:

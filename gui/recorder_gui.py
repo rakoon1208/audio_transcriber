@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import logging
 from datetime import datetime
+from pathlib import Path
 from . import visualization
 from audio.recorder import AudioRecorder, AudioConfig
 from audio.transcription import TranscriptionManager, TranscriptionConfig
@@ -36,6 +37,8 @@ class AudioRecorderGUI:
         self.device_var = tk.StringVar()
         self.timer_var = tk.StringVar(value="00:00:00")
         self.status_var = tk.StringVar(value="Ready")
+        self.transcription_progress = tk.StringVar(value="")
+        self.last_recording_path = None
 
     def _init_gui(self):
         """Initialize the GUI layout"""
@@ -86,21 +89,24 @@ class AudioRecorderGUI:
         controls_frame = ttk.LabelFrame(self.main_container, text="Controls", padding="5")
         controls_frame.pack(fill=tk.X, pady=(0, 10))
 
-        # Recording buttons
+        # Recording controls
+        button_frame = ttk.Frame(controls_frame)
+        button_frame.pack(side=tk.LEFT, padx=5)
+
         self.record_button = ttk.Button(
-            controls_frame,
+            button_frame,
             text="Start Recording",
             command=self._toggle_recording
         )
-        self.record_button.pack(side=tk.LEFT, padx=5)
+        self.record_button.pack(side=tk.LEFT, padx=2)
 
         self.pause_button = ttk.Button(
-            controls_frame,
+            button_frame,
             text="Pause",
             command=self._toggle_pause,
             state="disabled"
         )
-        self.pause_button.pack(side=tk.LEFT, padx=5)
+        self.pause_button.pack(side=tk.LEFT, padx=2)
 
         # Timer display
         ttk.Label(
@@ -119,9 +125,35 @@ class AudioRecorderGUI:
         trans_frame = ttk.LabelFrame(self.main_container, text="Transcription", padding="5")
         trans_frame.pack(fill=tk.BOTH, expand=True)
 
+        # Transcription controls
+        control_frame = ttk.Frame(trans_frame)
+        control_frame.pack(fill=tk.X, pady=(0, 5))
+
+        self.transcribe_button = ttk.Button(
+            control_frame,
+            text="Transcribe Recording",
+            command=self._transcribe_last_recording,
+            state="disabled"
+        )
+        self.transcribe_button.pack(side=tk.LEFT, padx=5)
+
+        ttk.Label(
+            control_frame,
+            textvariable=self.transcription_progress
+        ).pack(side=tk.LEFT, padx=5)
+
         # Transcription display
-        self.transcript_text = tk.Text(trans_frame, wrap=tk.WORD, height=10)
-        scrollbar = ttk.Scrollbar(trans_frame, command=self.transcript_text.yview)
+        text_frame = ttk.Frame(trans_frame)
+        text_frame.pack(fill=tk.BOTH, expand=True)
+
+        self.transcript_text = tk.Text(
+            text_frame,
+            wrap=tk.WORD,
+            height=10,
+            font=("Arial", 10)
+        )
+        
+        scrollbar = ttk.Scrollbar(text_frame, command=self.transcript_text.yview)
         self.transcript_text.configure(yscrollcommand=scrollbar.set)
 
         self.transcript_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
@@ -129,18 +161,22 @@ class AudioRecorderGUI:
 
     def _create_status_bar(self):
         """Create status bar"""
+        status_frame = ttk.Frame(self.root)
+        status_frame.pack(fill=tk.X, side=tk.BOTTOM)
+
         ttk.Label(
-            self.root,
+            status_frame,
             textvariable=self.status_var,
             relief=tk.SUNKEN,
             padding=(5, 2)
-        ).pack(fill=tk.X, side=tk.BOTTOM)
+        ).pack(fill=tk.X)
 
     def _init_bindings(self):
         """Initialize keyboard shortcuts"""
         self.root.bind('<Control-r>', lambda e: self._toggle_recording())
         self.root.bind('<Control-p>', lambda e: self._toggle_pause())
         self.root.bind('<Control-s>', lambda e: self._save_recording())
+        self.root.bind('<Control-t>', lambda e: self._transcribe_last_recording())
         self.root.bind('<Escape>', lambda e: self._stop_recording())
 
     def _toggle_recording(self):
@@ -156,6 +192,7 @@ class AudioRecorderGUI:
             self.audio_recorder.start_recording(callback=self._audio_callback)
             self.record_button.configure(text="Stop Recording")
             self.pause_button.configure(state="normal")
+            self.transcribe_button.configure(state="disabled")
             self._start_timer()
             self._update_status("Recording...")
         except Exception as e:
@@ -169,6 +206,7 @@ class AudioRecorderGUI:
             self.pause_button.configure(state="disabled")
             self._stop_timer()
             self._save_recording()
+            self.transcribe_button.configure(state="normal")
             self._update_status("Recording stopped")
         except Exception as e:
             self._handle_error("Failed to stop recording", e)
@@ -198,9 +236,45 @@ class AudioRecorderGUI:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             filename = self.file_manager.get_save_path(f"recording_{timestamp}")
             path = self.audio_recorder.save_recording(str(filename))
+            self.last_recording_path = path
             self._update_status(f"Recording saved: {path}")
         except Exception as e:
             self._handle_error("Failed to save recording", e)
+
+    def _transcribe_last_recording(self):
+        """Transcribe the last recording"""
+        if not self.last_recording_path:
+            messagebox.showwarning("Warning", "No recording available to transcribe")
+            return
+
+        self.transcribe_button.configure(state="disabled")
+        self.transcript_text.delete(1.0, tk.END)
+        self._transcribe_recording(self.last_recording_path)
+
+    def _transcribe_recording(self, filepath):
+        """Handle transcription of recording"""
+        try:
+            def progress_callback(info):
+                progress = info.get('progress', 0)
+                text = info.get('text', '')
+                self.transcription_progress.set(f"Progress: {progress*100:.0f}%")
+                self.transcript_text.insert(tk.END, text + " ")
+                self.transcript_text.see(tk.END)
+                self.root.update()
+
+            self._update_status("Starting transcription...")
+            result = self.transcription_manager.transcribe_audio(
+                str(filepath),
+                callback=progress_callback
+            )
+            
+            self.transcription_progress.set("")
+            self._update_status("Transcription complete")
+            
+        except Exception as e:
+            self._handle_error("Transcription failed", e)
+        finally:
+            self.transcribe_button.configure(state="normal")
 
     def _start_timer(self):
         """Start the recording timer"""
@@ -254,6 +328,11 @@ class AudioRecorderGUI:
             if not messagebox.askyesno("Exit", "Recording in progress. Stop and exit?"):
                 return
             self._stop_recording()
+        
+        # Cleanup
+        if hasattr(self, 'transcription_manager'):
+            self.transcription_manager.cleanup()
+        
         self.root.destroy()
 
     def run(self):
